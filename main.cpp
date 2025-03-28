@@ -1,5 +1,8 @@
 #include "raylib.h"
 #include <iostream>
+#include "Paddle.h"
+#include "Ball.h"
+#include "Score.h"
 
 using namespace std;
 
@@ -51,32 +54,14 @@ int main() {
 
     
     cout << "Hello World" << endl;
-    int screenWidth = 1000;
-    int screenHeight = 600;
+    float screenWidth = 1000;
+    float screenHeight = 600;
     srand(time(NULL));
 
     InitWindow(screenWidth, screenHeight, "Marie's first Raylib window!");
     SetTargetFPS(60);
     //INIT
-    float directionX = 1;
-    float directionY = 1;
-    float ballX = 200;
-    float ballY = 50;
-    float radius = 20;
-    Font ft = changeFont();
-    Color color = DARKGREEN;
-    float paddlePositionX = 100;
-    float paddlePositionY1 = 300;
-    float paddlePositionY2 = 300;
-    int paddleHeight = 200;
-    int paddleWidth = 20;
-    int paddleSpeed = 10;
-    int ballSpeed = 10;
-    int score1 = 0;
-    int score2 = 0;
-    int blockPaddleZone = 75;
-    Vector2 placeScore1{ screenWidth/2 - 100, 50 };
-    Vector2 placeScore2{ screenWidth /2 + 100, 50 };
+  
     Image img = LoadImage("resources/images/stp_bg.png");
     Image* imgPtr = &img;
     Texture2D texture = LoadTextureFromImage(img);
@@ -87,40 +72,29 @@ int main() {
 
    // UnloadImage(img);
 
-
+    Paddle player1(100, KEY_UP, KEY_DOWN);
+    Paddle* player1Ptr = &player1;
+    Paddle player2(screenWidth - 100, KEY_W, KEY_S);
+    Paddle* player2Ptr = &player2;
+    Ball ball;
+    Ball* ballPtr = &ball;
+    Score scorePlayer1(0, screenWidth - 100);
+    Score scorePlayer2(screenWidth,  100);
+   
 
     while (!WindowShouldClose()) {
         //UPDATE
         UpdateMusicStream(music);
-        ballX += ballSpeed * directionX;
-        ballY += ballSpeed/2 * directionY;
-      
-        
-        if (ballX >= paddlePositionX - radius && ballX <= paddlePositionX + paddleWidth + radius) 
-        {
-            if (ballY >= paddlePositionY1 - radius && ballY <= paddlePositionY1 + paddleHeight + radius)
-            {
-                directionX *= -1; color = changeColor(); changeFont();
-                ballSpeed++;
-            }
-        }
-        if (ballX >= screenWidth - paddlePositionX - radius &&  ballX <= screenWidth - paddlePositionX + paddleWidth + radius)
-        {
-            if (ballY >= paddlePositionY2 - radius && ballY <= paddlePositionY2 + paddleHeight + radius)
-            {
-                directionX *= -1; color = changeColor(); changeFont();
-                ballSpeed++;
-            }
-        }
+        ball.ballMove();
+        ball.collision(player1Ptr);
+        ball.collision(player2Ptr);
+        if (ball.mPosX >= screenWidth - ball.mRadius) { scorePlayer2.scoreIncrease(ballPtr); }
+        if (ball.mPosY <= 0 + ball.mRadius) { scorePlayer1.scoreIncrease(ballPtr); }
 
-        if (ballY >= screenHeight - radius || ballY <= 0 + radius) { directionY *= -1; color = changeColor(); changeFont(); }
-        if (ballX >= screenWidth - radius) { ballX = screenWidth / 2; ballY = screenHeight / 2; changeFont(); score1++; }
-        if (ballX <= 0 + radius) { ballX = screenHeight / 2; ballY = screenWidth / 2; changeFont(); score2++; }
+
         
-        if (IsKeyDown(KEY_UP) && paddlePositionY1 >= 0 + blockPaddleZone ) { paddlePositionY1 += -paddleSpeed; }
-        if (IsKeyDown(KEY_DOWN) && paddlePositionY1 + paddleHeight <= screenHeight - blockPaddleZone) { paddlePositionY1 += paddleSpeed; }
-        if (IsKeyDown(KEY_W) && paddlePositionY2 >= 0 + blockPaddleZone) { paddlePositionY2 += -paddleSpeed; }
-        if (IsKeyDown(KEY_S) && paddlePositionY2 + paddleHeight <= screenHeight - blockPaddleZone) { paddlePositionY2 += paddleSpeed; }
+        if (IsKeyDown(player1.mKeyUp) || IsKeyDown(player1.mKeyDown) ) { player1.paddleMove(screenHeight, GetKeyPressed());}
+        if (IsKeyDown(player2.mKeyUp) || IsKeyDown(player2.mKeyDown)) { player2.paddleMove(screenHeight, GetKeyPressed()); }
 
         BeginDrawing();
         
@@ -128,12 +102,12 @@ int main() {
         //DRAW
        
         DrawTexture( texture,  0,  0, WHITE);
-        DrawCircle(ballX, ballY, radius, WHITE);
-        DrawRectangle(paddlePositionX, paddlePositionY1, paddleWidth, paddleHeight, WHITE);
-        DrawRectangle(screenWidth-paddlePositionX, paddlePositionY2, paddleWidth, paddleHeight, WHITE);
-        DrawRectangle(screenWidth / 2 + 10, 0, 10, screenHeight, WHITE);
-        DrawTextEx(ft, TextFormat("%i", score1), placeScore1, 100, 1, WHITE);
-        DrawTextEx(ft, TextFormat("%i", score2), placeScore2, 100, 1, WHITE);
+        ball.drawBall();
+        player1.drawPaddle();
+        player2.drawPaddle();
+        scorePlayer1.drawText();
+        scorePlayer2.drawText();
+        
         EndDrawing();
     }
 
